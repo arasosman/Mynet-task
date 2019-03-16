@@ -7,13 +7,17 @@ use App\Person;
 use Mockery\Exception;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 
 class PersonController extends Controller
 {
 
     public function index()
     {
-        return response()->json(Person::all());
+        $result = Cache::remember('all_person', 60 * 60, function () {
+            return Person::all();
+        });
+        return response()->json($result);
     }
 
     public function store(Request $request)
@@ -49,7 +53,10 @@ class PersonController extends Controller
 
     public function show($id)
     {
-        $person = Person::find($id);
+
+        $person = Cache::remember('person_show_' . $id, 60 * 60, function () use ($id) {
+            return Person::find($id);
+        });
 
         return response()->json($person, 200);
 
@@ -66,17 +73,16 @@ class PersonController extends Controller
 
         if (!isset($person->id))
             abort(404);
-        try{
+        try {
             $person->name = $request->input('name');
             $person->birthday = $request->input('birthday');
             $person->gender = $request->input('gender');
             $person->save();
-            return response()->json($person,'200');
-        }catch (Exception $e) {
+            return response()->json($person, '200');
+        } catch (Exception $e) {
             return response()->json($e->getMessage(), $e->getCode());
         }
     }
-
 
     public function destroy($id)
     {
@@ -84,25 +90,35 @@ class PersonController extends Controller
 
         if (!isset($person->id))
             abort(404);
-        try{
+        try {
             $person->delete();
-            return response()->json("Success",'200');
-        }catch (Exception $e) {
+            return response()->json("Success", '200');
+        } catch (Exception $e) {
             return response()->json($e->getMessage(), $e->getCode());
         }
     }
 
-    public function addresses($person_id){
-        $result = Person::find($person_id)->addresses;
-        return response()->json($result,200);
+    public function addresses($person_id)
+    {
+
+        $result = Cache::remember('address_' . $person_id, 60 * 60, function () use ($person_id) {
+            return Person::find($person_id)->addresses;
+        });
+
+        return response()->json($result, 200);
     }
 
-    public function address($person_id,$id){
-        $result = Person::find($person_id)->addresses()->where('id',$id)->first();
-        return response()->json($result,200);
+    public function address($person_id, $id)
+    {
+        $result = Cache::remember('address_' . $person_id . '_' . $id, 60 * 60, function () use ($id, $person_id) {
+            return Person::find($person_id)->addresses()->where('id', $id)->first();
+        });
+
+        return response()->json($result, 200);
     }
 
-    public function saveAddress(Request $request){
+    public function saveAddress(Request $request)
+    {
 
         $request->validate([
             'person_id' => 'bail|required|max:255',
@@ -113,7 +129,7 @@ class PersonController extends Controller
         ]);
 
         $obj = $request->all();
-        $obj = (object) $obj;
+        $obj = (object)$obj;
 
         $address = new Address();
         $address->person_id = $obj->person_id;
@@ -123,6 +139,11 @@ class PersonController extends Controller
         $address->country_name = $obj->country_name;
         $address->save();
 
-        return response()->json($address,200);
+        return response()->json($address, 200);
+    }
+
+    public function clearCache(){
+        Cache::flush();
+        return "Cache Clear";
     }
 }
