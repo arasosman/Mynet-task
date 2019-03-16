@@ -14,7 +14,7 @@
     <body>
        <div id="app">
        </div>
-       <script src="/js/app.4e016b14.js"></script>
+       <script src="/js/app.27b2a24e.js"></script>
        <script src="/js/chunk-vendors.4c1a6345.js"></script>
     </body>
 </html>
