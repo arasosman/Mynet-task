@@ -14,3 +14,10 @@
 Route::get('/',function (){
    echo "test";
 });
+
+Route::get('/login',function (){
+   return response()->json([
+       "statu" => false,
+       "message" => "Not Authorize"
+   ],401);
+})->name('login');
