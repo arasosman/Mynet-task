@@ -11,12 +11,6 @@
 |
 */
 
-Route::get('/{any}', function () {
-
-    return view('welcome');
-
-})->where('any', '.*');
-
-
-// Using api route
-//deneme
+Route::get('/',function (){
+   echo "test";
+});
